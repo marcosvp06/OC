@@ -50,7 +50,10 @@ with open(path_entrada , "r") as entrada:
 
         if instruction in two_bytes:
             result += two_bytes[instruction]
-            addr = int(separados[-1], 0)
+            if separados[-1][:2] in ["0x", "0b"]:
+                addr = int(separados[-1], 0)
+            else:
+                addr = int(separados[-1])
             if addr <= 127 and addr >= -128:
                 complement = (addr + 256) % 256 
                 hex_addr = "\n" + hex(complement)[2:].upper()
