@@ -1,5 +1,5 @@
 data r0,0x30 ; comentário: dado hexadecimal 
-DATA r1, 06  ; dado em decimal
+DATA r1, 130  ; dado em decimal
 DATA r1, -06  ; dado em decimal
 
 dAta r2,0b00001000 ; dado binário
