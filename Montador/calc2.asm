@@ -59,7 +59,7 @@ jmp 0x6d      ; Se a operação não for reconhecida, encerra o programa
 
     cmp r0 r1       ; Compara os dois operandos
     jz 0x4f         ; Se 'a' for 0, resultado é zero
-    
+
     cmp r1 r0       ; Compara os dois operandos
     jz 0x4f         ; Se 'b' for 0, resultado é zero
     jae 0x44   ; Se R1 >= R0, executa R1 somado R0 vezes
@@ -75,7 +75,7 @@ jmp 0x6d      ; Se a operação não for reconhecida, encerra o programa
         cmp r0 r3        ; Verifica se já somou R1 R0 vezes
         je 0x52          ; Se sim, vai para impressão do resultado
 
-        data r3 255
+        data r3 -1
         add r3 r0
         add r2 r1
         data r3 1
@@ -96,7 +96,7 @@ jmp 0x6d      ; Se a operação não for reconhecida, encerra o programa
 
 ;dezena:
     add r0 r2         ; Incrementa contador de dezenas
-    data r3 246       ; R3 = -10 (em complemento de dois)
+    data r3 -10       ; R3 = -10
     add r3 r1         ; Subtrai 10 do valor total
     data r3 10        ; R3 = 10 novamente
     cmp r1 r3         ; Verifica se ainda >= 10

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 @dataclass
 class Instrucao:
     opcode: int
-    is_2bytes: bool
-    is_ra: bool
-    is_rb: bool
+    has_2bytes: bool
+    has_ra: bool
+    has_rb: bool
 
 instructions = {
     "ADD":   Instrucao(0x80, False, True, True),
@@ -89,7 +89,7 @@ def montar_instrucao(parts, lineno):
             raise ValueError(f"Modo invalido '{modo}' em '{instr}' na linha {lineno}")
         i += 1
 
-    if info.is_ra:
+    if info.has_ra:
         if i >= len(parts):
             raise ValueError(f"Esperado registrador RA apos '{instr}' na linha {lineno}")
         ra = parts[i].upper()
@@ -98,7 +98,7 @@ def montar_instrucao(parts, lineno):
         binary += registers[ra] << 2
         i += 1
 
-    if info.is_rb:
+    if info.has_rb:
         if i >= len(parts):
             raise ValueError(f"Esperado registrador RB apos '{instr}' na linha {lineno}")
         rb = parts[i].upper()
@@ -109,7 +109,7 @@ def montar_instrucao(parts, lineno):
 
     result.append(hex(binary)[2:])
 
-    if info.is_2bytes:
+    if info.has_2bytes:
         if i >= len(parts):
             raise ValueError(f"Esperado valor adicional apos '{instr}' na linha {lineno}")
         if parts[i] in labels:
@@ -146,7 +146,7 @@ def main():
     if not entrada.lower().endswith(".asm"):
         print(f"Erro: o arquivo de entrada deve ter extensao .asm (recebido: '{entrada}')")
         sys.exit(1)
-        
+
     labels = {}
     linecode = 0
     with open(entrada, 'r') as fin:
@@ -169,7 +169,7 @@ def main():
                     print(f"[ERRO] Instrucao invalida '{instr}' na linha {lineno}")
                     continue
                 info = instructions[instr]
-                linecode += 2 if info.is_2bytes else 1
+                linecode += 2 if info.has_2bytes else 1
 
     sucesso = True
     with open(entrada, 'r') as fin, open(saida, 'w') as fout:

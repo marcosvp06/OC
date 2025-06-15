@@ -1,12 +1,12 @@
-data r0,0x30 ; comentário: dado hexadecimal 
-DATA r1, 130  ; dado em decimal
+data r0,0x30 ; comentário: dado hexadecimal
+DATA r1, 06  ; dado em decimal
 DATA r1, -06  ; dado em decimal
 
 dAta r2,0b00001000 ; dado binário
-  data r3,0xff 
+  data r3,0xff
 
 ; comentário 2
-shr R0,R1    
+shr R0,R1
 shl   r3,r2
 not r3, r0
 and r0,R1
@@ -18,7 +18,7 @@ ld r0,r1
 st r3,r1
 
 ;comentario 3
-clf     
+clf
 
 cmp r1,r2
 
