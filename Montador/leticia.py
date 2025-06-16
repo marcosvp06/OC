@@ -1,22 +1,54 @@
-# Autor: Marcos Paulo Vieira Pedrosa
+# Autora: Leticia Souza de Souza
+# Matricula: 22450212
 
-import sys, os  # Importa o modulo 'sys' (para uso no terminal) e 'os' (para operacoes com arquivos)
+import sys # Importa o modulo 'sys'
+import os # Importa o modulo 'os'
 
 # Tabela de instrucoes que usam os dois registradores (RA e RB) com seus codigos em hexa
-has_ra_rb = {'ADD': 0x80, 'SHR': 0x90, 'SHL': 0xa0, 'NOT': 0xb0, 'AND': 0xc0, 'OR': 0xd0, 'XOR': 0xe0, 'CMP': 0xf0, 'LD': 0x00, 'ST': 0x10}
+has_ra_rb = {
+    'ADD': 0x80,
+    'SHR': 0x90,
+    'SHL': 0xa0,
+    'NOT': 0xb0,
+    'AND': 0xc0,
+    'OR': 0xd0,
+    'XOR': 0xe0,
+    'CMP': 0xf0,
+    'LD': 0x00,
+    'ST': 0x10
+}
 
 # Tabela de instrucoes que usam apenas o registrador RB com seus codigos em hexa
-only_rb = {'DATA': 0x20, 'JMPR': 0x30, 'IN': 0x70, 'OUT': 0x78}
+only_rb = {
+    'DATA': 0x20,
+    'JMPR': 0x30,
+    'IN': 0x70,
+    'OUT': 0x78
+}
 
 # Tabela de instrucoes que geram dois bytes de saida com seus códigos em hexa
-two_bytes = {'DATA': 0x20, 'JMP': 0x40, 'JCAEZ': 0x50}
+two_bytes = {
+    'DATA': 0x20,
+    'JMP': 0x40,
+    'JCAEZ': 0x50
+}
 
-# Tabela de registradores com seus codigos em hexa
-registers = {'R0': 0x00, 'R1': 0x01, 'R2': 0x02, 'R3': 0x03}
+# Tabela de registradores com seus codigos em inteiro
+registers = {
+    'R0': 0,
+    'R1': 1,
+    'R2': 2,
+    'R3': 3
+}
 
 # Tabela de flags da instrucao JCAEZ com seus codigos em inteiro
 # Cada flag acrescenta no codigo da instrucao o bit '1' da sua posicao no JCAEZ. Dessa forma: 'C' = 0b1000; 'A' = 0b0100; 'E' = 0b0010; 'Z' = 0b0001
-jcaez = {'C': 8, 'A': 4, 'E': 2, 'Z': 1}
+jcaez = {
+    'C': 8,
+    'A': 4,
+    'E': 2,
+    'Z': 1
+}
 
 # Checa se existem 3 argumentos após o comando "python3": montador.py <entrada.asm> <saida.txt>)
 if len(sys.argv) != 3:
@@ -31,7 +63,7 @@ with open(path_in , "r") as inputFile:
   # Abre o arquivo de saida (.txt) para escrita
   with open(path_out, "w") as outputFile:
 
-    # Escreve no arquivo de saida o cabeçalho do formato de um arquivo de memoria do Logisim
+    # Escreve no arquivo de saida o cabeçalho do formato v3.0 hex words plain
     outputFile.write("v3.0 hex words plain\n")
 
     # Percorre cada linha do arquivo de entrada
@@ -44,17 +76,17 @@ with open(path_in , "r") as inputFile:
         # Troca vírgulas por espaços (para facilitar o split)
         line = line.replace(",", " ")
 
-        # Divide a linha em partes, retira espaços extras e converte tudo para maiusculas (e guarda numa lista contendo as partes)
+        # Converte tudo para maiusculas, retira espacos extras e guarda as partes numa lista
         parts = [x.strip().upper() for x in line.split()]
         instruction = parts[0]  # A primeira palavra representa a instrução
         result = 0  # Valor inicial do codigo de maquina da linha
-        hex_addr = ""   # Inicializa a string do segundo byte da instrucao (addr) a ser escrito (se houver)
+        hex_addr = ""   # String que contem o segundo byte (addr)
 
         # Consulta a tabela para tratar instrucoes que utilizam os dois registradores (RA e RB)
         if instruction in has_ra_rb:
             ra = parts[1]  # RA é a segunda palavra
             rb = parts[-1]  # RB é a última palavra
-            result += has_ra_rb[instruction] + 4*registers[ra] + registers[rb]  # Acumula no valor do codigo de maquina a soma entre: codigo da instrucao + codigo do registrador RA deslocado 2 vezes a esquerda (4*RA) + codigo do registrador RB. Ambos os valores consultados nas tabelas
+            result += has_ra_rb[instruction] + 4*registers[ra] + registers[rb] # Monta o primeiro byte: instrucao + RA deslocado 2 vezes para a esquerda + RB
 
         # Consulta a tabela para tratar instrucoes que utilizam apenas o segundo registrador (RB)
         elif instruction in only_rb:
@@ -73,13 +105,13 @@ with open(path_in , "r") as inputFile:
         elif instruction == "CLF":
             result += 0x60  # Soma o valor do codigo do CLF
 
-        # Caso a instrucao nao utilize registradores, comece com 'J' e nao seja "JMP", entao se trata da instrucao JCAEZ
+        # Trata instrucoes do tipo JCAEZ (ex: JC, JAE, etc.)
         elif instruction[0] == 'J' and instruction != "JMP":
             for ch in instruction[1:]:  # Percorre os caracteres de flag (ex: JCE -> ['C','E'])
                 result += jcaez[ch]  # Soma o valor do codigo da flag correspondente (consultado na tabela)
             instruction = "JCAEZ"  # Muda o nome da instrucao para ser encontrada na tabela seguir o tratamento de two_bytes
 
-        # Se for uma instrucao que escreve um segundo byte no arquivo de saida, ou seja, possui um argumento que guarda um valor ou endereco (Addr)
+        # Consulta a tabela para tratar instrucoes que utilizam dois bytes
         if instruction in two_bytes:
             result += two_bytes[instruction]  # Acumula no resultado o valor do codigo da instrucao (consultado na tabela)
 
