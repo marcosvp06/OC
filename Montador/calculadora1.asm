@@ -1,4 +1,4 @@
-xor r0, r0         ; Endereco do teclado
+clr r0        ; Endereco do teclado
 out addr, r0       ; Ativa o teclado
 
 in data, r0        ; R0 recebe o primeiro dígito (em ASCII)
@@ -27,7 +27,7 @@ je multiplica     ; Se sim, pula para o bloco de multiplicação
 
 data r3, 63        ; R3 recebe o valor ASCII de '?'
 out data, r3       ; Exibe '?' no monitor
-jmp encerra      ; Se a operação não for reconhecida, encerra o programa
+halt      ; Se a operação não for reconhecida, encerra o programa
 
 soma:
     add r0, r1     ; Soma os dois dígitos (resultado vai para R1)
@@ -52,7 +52,7 @@ subtrai:
         jmp soma      ; Soma R1 + (-R0)
 
 multiplica:
-    xor r2, r2
+    clr r2
     add r1, r2
 
     data r3, 1       ; Inicializa contador R3 com 1
@@ -83,7 +83,7 @@ multiplica:
         jmp a_vezes_b    ; Repete até alcançar o número de repetições
 
     zero:
-        xor r1, r1
+        clr r1
         jmp final
 
 final:
