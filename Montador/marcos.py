@@ -1,129 +1,188 @@
 # Autor: Marcos Paulo Vieira Pedrosa
 # Matricula: 22401906
 
-import sys, os  # Importa os modulos 'sys' (para uso no terminal) e 'os' (para operacoes com arquivos)
-from dataclasses import dataclass  # Importa o 'dataclass' para criar uma estrutura de dados mais simples
+import sys
+import os
+from dataclasses import dataclass, field
 
-# Define uma classe "Instrucao" para representar cada instrucao da linguagem de maquina
 @dataclass
-class Instrucao:
-    opcode: int        # Codigo da instrucao (em hexa)
-    has_ra: bool       # Indica se a instrucao utiliza o registrador RA
-    has_rb: bool       # Indica se a instrucao utiliza o registrador RB
-    has_2bytes: bool   # Indica se a instrucao ocupa dois bytes na memoria (precisa de um segundo byte de argumento)
+class Instruction:
+    opcode: int
+    has_ra: bool
+    has_rb: bool
+    has_2bytes: bool
 
-# Tabela com todas as instrucoes, seus opcodes e suas configuracoes de uso de registradores (RA, RB) e segundo byte
+@dataclass
+class PseudoInstruction:
+    has_first_register: bool
+    has_second_register: bool
+    bytes_size: int
+    replacements: list[str] = field(default_factory=list)
+
 instructions = {
-    "ADD":   Instrucao(0x80, True, True, False),
-    "SHR":   Instrucao(0x90, True, True, False),
-    "SHL":   Instrucao(0xA0, True, True, False),
-    "NOT":   Instrucao(0xB0, True, True, False),
-    "AND":   Instrucao(0xC0, True, True, False),
-    "OR" :   Instrucao(0xD0, True, True, False),
-    "XOR":   Instrucao(0xE0, True, True, False),
-    "CMP":   Instrucao(0xF0, True, True, False),
-    "LD":    Instrucao(0x00, True, True, False),
-    "ST":    Instrucao(0x10, True, True, False ),
-    "DATA":  Instrucao(0x20, False, True, True ),
-    "JMPR":  Instrucao(0x30, False, True, False),
-    "JMP":   Instrucao(0x40, False, False, True),
-    "JCAEZ": Instrucao(0x50, False, False, True),
-    "CLF":   Instrucao(0x60, False, False, False),
-    "IN":    Instrucao(0x70, False, True, False),
-    "OUT":   Instrucao(0x78, False, True, False)
+    "ADD":   Instruction(0x80, True, True, False),
+    "SHR":   Instruction(0x90, True, True, False),
+    "SHL":   Instruction(0xA0, True, True, False),
+    "NOT":   Instruction(0xB0, True, True, False),
+    "AND":   Instruction(0xC0, True, True, False),
+    "OR" :   Instruction(0xD0, True, True, False),
+    "XOR":   Instruction(0xE0, True, True, False),
+    "CMP":   Instruction(0xF0, True, True, False),
+    "LD":    Instruction(0x00, True, True, False),
+    "ST":    Instruction(0x10, True, True, False),
+    "DATA":  Instruction(0x20, False, True, True),
+    "JMPR":  Instruction(0x30, False, True, False),
+    "JMP":   Instruction(0x40, False, False, True),
+    "JCAEZ": Instruction(0x50, False, False, True),
+    "CLF":   Instruction(0x60, False, False, False),
+    "IN":    Instruction(0x70, False, True, False),
+    "OUT":   Instruction(0x78, False, True, False)
 }
 
-# Tabela de registradores com seus codigos binarios
-registers = {"R0": 0b00, "R1": 0b01, "R2": 0b10, "R3": 0b11}
+pseudoInstructions = {
+    "MOV":  PseudoInstruction(True, True, 2, ["XOR RB RB", "XOR RA RB"]),
+    "CLR":  PseudoInstruction(True, False, 1, ["XOR RA RA"]),
+    "HALT": PseudoInstruction(False, False, 2, ["JMP HALT_LABEL"])
+}
 
-# Tabela de flags da instrucao JCAEZ com seus codigos em binario
+registers = {"R0": 0b00, "R1": 0b01, "R2": 0b10, "R3": 0b11}
 jcaez = {'C': 0b1000, 'A': 0b0100, 'E': 0b0010, 'Z': 0b0001}
 
-# Checa se o numero de argumentos passados no terminal esta correto (esperado: montador.py <entrada.asm> <saida.txt>)
-if len(sys.argv) != 3:
-    print("Uso: python3 montador.py <entrada.asm> <saida.txt>")  # Mostra mensagem de uso correto
-    sys.exit(1)  # Encerra o programa
+def pre_process(input_lines, labels, original_line_numbers):
+    output_line = 0
+    halt_count = 0
+    new_lines = []
 
-# Guarda os caminhos dos arquivos de entrada e saida
-path_in = sys.argv[1]
-path_out = sys.argv[2]
+    for lineno, original_line in enumerate(input_lines, start=1):
 
-try:
-    # Abre o arquivo de entrada (.asm) para leitura e o de saida (.txt) para escrita
-    with open(path_in, 'r') as fin, open(path_out, 'w') as fout:
-        fout.write("v3.0 hex words plain\n")  # Escreve o cabecalho do arquivo de memoria do Logisim
+        clean_line = original_line.split(";", 1)[0].strip()
+        parts_with_label = clean_line.split(":", 1)
+        if len(parts_with_label) == 2:
+            label = parts_with_label[0].strip().upper()
+            if label:
+                labels[label] = output_line
+            clean_line = parts_with_label[1].strip()
 
-        # Percorre cada linha do arquivo de entrada, guardando o numero da linha (lineno) para uso em mensagens de erro
-        for lineno, line in enumerate(fin, start=1):
-            # Remove comentarios (tudo apos ';') e espacos extras
-            line = line.split(";")[0].strip()
-            if not line: continue  # Ignora linhas vazias
+        clean_line = clean_line.replace(",", " ")
+        if not clean_line:
+            continue
 
-            # Troca virgulas por espacos e separa as partes da linha
-            line = line.replace(",", " ")
-            parts = [x.strip().upper() for x in line.split()] # Divide a linha em partes, retira espaços extras e converte tudo para maiusculas (e guarda numa lista contendo as partes)
+        parts = clean_line.upper().split()
+        instr_name = parts[0]
+        args = parts[1:]
 
-            # Inicializa variaveis de trabalho: resultado do codigo da instrucao (result); codigo do registrador RA; codigo do registrador RB
+        if instr_name in pseudoInstructions:
+            pseudo = pseudoInstructions[instr_name]
+            expanded = list(pseudo.replacements)
+
+            if pseudo.has_first_register:
+                expanded = [instr.replace("RA", args[0]) for instr in expanded]
+            if pseudo.has_second_register:
+                expanded = [instr.replace("RB", args[1]) for instr in expanded]
+
+            if instr_name == "HALT":
+                halt_label = f"__HALT_{halt_count}"
+                halt_count += 1
+                expanded = [instr.replace("HALT_LABEL", halt_label) for instr in expanded]
+                labels[halt_label] = output_line
+
+            new_lines.extend(expanded)
+            original_line_numbers.extend([lineno] * len(expanded))
+            output_line += pseudo.bytes_size
+
+        else:
+            new_lines.append(clean_line)
+            original_line_numbers.append(lineno)
+            output_line += 1
+            if instr_name.startswith("J") or (
+                instr_name in instructions and instructions[instr_name].has_2bytes
+            ):
+                output_line += 1
+
+    input_lines[:] = new_lines
+    return
+
+def assemble(input_lines, labels, fout, original_line_numbers):
+    for i, line in enumerate(input_lines):
+        lineno = original_line_numbers[i]
+        try:
+            parts = line.upper().split()
+            if not parts:
+                continue
+
+            instr_name = parts[0]
+            args = parts[1:]
             result = ra = rb = 0
-            hex_addr = "" # Inicializa a string do segundo byte da instrucao (addr) a ser escrito (se houver)
-            pos = 1  # Posicao inicial para leitura dos argumentos (por padrao, segunda palavra da linha)
+            hex_addr = ""
+            pos = 0
 
-            # Caso a instrucao comece com 'J' e nao seja "JMP" nem "JMPR", entao se trata da instrucao JCAEZ
-            if parts[0][0] == "J" and parts[0] not in ["JMP", "JMPR"]:
-                for ch in parts[0][1:]:  # Para cada flag presente na instrucao
-                    result += jcaez[ch]  # Soma o valor correspondente da flag
-                parts[0] = "JCAEZ"  # Altera o nome da instrucao para JCAEZ (para buscar na tabela depois)
+            if instr_name[0] == "J" and instr_name not in ["JMP", "JMPR"]:
+                for ch in instr_name[1:]:
+                    result += jcaez[ch]
+                instr_name = "JCAEZ"
 
-            # Caso a instrucao seja IN ou OUT
-            if parts[0] in ["IN", "OUT"]:
-                pos += 1  # Avanca a posicao dos argumentos
-                if parts[1] == "ADDR": # Caso utilize o modo endereco (ADDR)
-                    result += 4  # Soma o valor de endereco (0b100) no resultado
+            if instr_name in ["IN", "OUT"]:
+                if args[0] == "ADDR":
+                    result += 4
+                pos += 1
 
-            # Consulta a tabela de instrucoes e guarda em instr
-            instr = instructions[parts[0]]
+            instr = instructions[instr_name]
 
-            # Se a instrucao usa RA, pega o codigo do registrador (consultando na tabela)
             if instr.has_ra:
-                ra = registers[parts[pos]]
-                pos += 1 # Avanca a posicao dos argumentos
-
-            # Se a instrucao usa RB, pega o codigo do registrador (consultando na tabela)
+                ra = registers[args[pos]]
+                pos += 1
             if instr.has_rb:
-                rb = registers[parts[pos]]
-                pos += 1 # Avanca a posicao dos argumentos
+                rb = registers[args[pos]]
+                pos += 1
 
-            # Monta o primeiro byte (opcode + 4*RA + RB)
-            # Acumula no valor do codigo de maquina a soma entre: codigo da instrucao + codigo do registrador RA deslocado 2 vezes a esquerda (4*RA) + codigo do registrador RB. Ambos os valores consultados nas tabelas
-            result += instr.opcode + 4*ra + rb
-            hex_result = f"{result:02X}"  # Converte o resultado para hexa com dois digitos
+            result += instr.opcode + 4 * ra + rb
+            hex_result = f"{result:02X}"
 
-            # Se for uma instrucao que escreve um segundo byte no arquivo de saida, ou seja, possui um argumento que guarda um valor ou endereco (Addr)
             if instr.has_2bytes:
-                # Identifica se o argumento esta em hexadecimal ou binario
-                if parts[-1].startswith(("0X", "0B")):
-                    addr = int(parts[-1], 0)  # Converte para inteiro automaticamente (estando em binario ou hexa)
-                    # Verifica o intervalo permitido (0 a 255)
+                addr_str = args[-1]
+                if addr_str in labels:
+                    addr_str = f"0X{labels[addr_str]:02X}"
+
+                if addr_str.startswith(("0X", "0B")):
+                    addr = int(addr_str, 0)
                     if not 0 <= addr <= 255:
-                        raise ValueError("Valor fora do intervalo [0, 255]") # Mostra mensagem de erro
+                        raise ValueError("Valor fora do intervalo [0, 255]")
                 else:
-                    addr = int(parts[-1])  # Converte o argumento como decimal
-                    # Se for DATA, o intervalo permitido e [-128, 127]
-                    if parts[0] == "DATA" and not -128 <= addr <= 127:
-                        raise ValueError("Valor fora do intervalo [-128, 127]") # Mostra mensagem de erro
-                    # Se for outra instrucao, o intervalo e [0, 255]
-                    if parts[0] != "DATA" and not 0 <= addr <= 255:
-                        raise ValueError("Valor fora do intervalo [0, 255]") # Mostra mensagem de erro
+                    addr = int(addr_str)
+                    if instr_name == "DATA" and not -128 <= addr <= 127:
+                        raise ValueError("Valor fora do intervalo [-128, 127]")
+                    if instr_name != "DATA" and not 0 <= addr <= 255:
+                        raise ValueError("Valor fora do intervalo [0, 255]")
+                addr_byte = (addr + 256) % 256
+                hex_addr = "\n" + f"{addr_byte:02X}"
 
-                # Calcula o complemento de 2 (em 8 bits) para representar o segundo byte
-                complement = (addr + 256) % 256
-                hex_addr = "\n" + f"{complement:02X}"  # Gera a linha do segundo byte em hexa
-
-            # Escreve o resultado final no arquivo de saida: codigo instrucao + segundo byte
             fout.write(hex_result + hex_addr + "\n")
 
-# Caso ocorra algum erro durante o processo
-except Exception as e:
-    print(f"Erro na linha {lineno}: {e}")  # Mostra em qual linha ocorreu o erro
-    os.remove(path_out)  # Remove o arquivo de saida (para evitar deixar um arquivo corrompido)
-    raise e  # Mostra o erro no terminal
+        except Exception as e:
+            raise Exception(f"Erro ao montar na linha {lineno}: {line.strip()} | Erro: {e}") from e
+
+def main():
+    if len(sys.argv) != 3:
+        print("Uso: python3 montador.py <entrada.asm> <saida.txt>")
+        sys.exit(1)
+
+    path_in, path_out = sys.argv[1], sys.argv[2]
+
+    try:
+        with open(path_in, 'r') as fin, open(path_out, 'w') as fout:
+            fout.write("v3.0 hex words plain\n")
+            labels = {}
+            original_line_numbers = []
+            input_lines = fin.read().splitlines()
+
+            pre_process(input_lines, labels, original_line_numbers)
+            assemble(input_lines, labels, fout, original_line_numbers)
+
+    except Exception as e:
+        print(e)
+        if os.path.exists(path_out):
+            os.remove(path_out)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

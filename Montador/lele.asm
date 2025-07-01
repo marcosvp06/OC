@@ -3,7 +3,7 @@ out addr r0       # Ativa o teclado
 
 in data r0        # R0 recebe o primeiro dígito (em ASCII)
 in data r2        # R2 recebe o caractere da operação (em ASCII)
-in data r1        # R1 recebe o segundo dígito (em ASCII)
+in data r1        # R1 recesbe o segundo dígito (em ASCII)
 
 data r3 48        # R3 recebe o valor ASCII de '0'
 
@@ -59,7 +59,7 @@ multiplica:
 
     cmp r0 r1       # Compara os dois operandos
     jz zero         # Se 'a' for 0, resultado é zero
-    
+
     cmp r1 r0       # Compara os dois operandos
     jz zero         # Se 'b' for 0, resultado é zero
     jae a_vezes_b   # Se R1 >= R0, executa R1 somado R0 vezes
@@ -111,7 +111,7 @@ dezena:
 unidade:
     data r3 48        # R3 = '0' em ASCII
     add r3 r1         # Converte valor de R1 para ASCII
-    out data r1       # Imprime o dígito das unidades
+    out data r1       # Imprime o dícito das unidades
 
 encerra:
     jump encerra      # Loop infinito para encerrar o programa
