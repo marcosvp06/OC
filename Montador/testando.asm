@@ -1,9 +1,0 @@
-data r0, 3
-data r1, 5
-mov r0, r2
-mov r1, r0
-mov r2, r1
-clr r0
-clr r1
-clr r2
-halt

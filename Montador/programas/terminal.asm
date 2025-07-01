@@ -1,5 +1,5 @@
 inicio:
-    data r0 0
+    clr r0
     out addr r0
     in data r1
     data r0 1
