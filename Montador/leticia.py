@@ -113,7 +113,7 @@ with open(path_in, "r") as inputFile:
             # Linha normal (não é pseudo-instrução)
             program_lines.append(parts)
             # Soma tamanho que ela vai ocupar:
-            if instr[0] == 'J' and instr != "JMP":
+            if instr[0] == 'J' and instr != "JMPR":
                 # Instruções do tipo JC, JAE, etc → viram JCAEZ + flags, sempre ocupam 2 bytes
                 address += 2
             elif instr in two_bytes:

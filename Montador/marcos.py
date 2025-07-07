@@ -120,9 +120,7 @@ def pre_process(input_lines, labels, original_line_numbers):
             original_line_numbers.append(lineno)
             output_line += 1
             # Se a instrução ocupa dois bytes (ex: JMP, JCAEZ, DATA etc), soma mais 1
-            if instr_name.startswith("J") or (
-                instr_name in instructions and instructions[instr_name].has_2bytes
-            ):
+            if (instr_name.startswith("J") and instr_name != "JMPR") or(instr_name in instructions and instructions[instr_name].has_2bytes):
                 output_line += 1
 
     # Substitui as linhas originais pelas novas linhas processadas
