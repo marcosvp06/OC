@@ -111,16 +111,16 @@ mostra_resultado:
   jmp return_mostra
 
 main:
-  jmp leitura
+  jmp leitura ; chama a sub-rotina de leitura
   return_leitura:
 
   data r2, 0xff ; Seta em R2 o endereco 0xff
   data r3, 0x68 ; Seta em R3 o endereco 0x68
   st r2, r3 ; Armazena na memoria (em 0xff) o endereco de retorno dessa chamada da divisao_inteira (0x68)
-  jmp divisao_inteira
+  jmp divisao_inteira ; chama a sub-rotina de divisao inteira
   ; endereco de retorno == 0x68
 
-  jmp mostra_resultado
+  jmp mostra_resultado  ; chama a sub-rotina de exibicao no monitor
   return_mostra:
 
-  _halt_: halt
+  _halt_: halt  ; encerra o programa
