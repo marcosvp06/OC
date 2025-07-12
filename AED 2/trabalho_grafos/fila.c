@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "fila.h"
 
 void inicializa_fila(Fila* fila){
@@ -8,7 +7,7 @@ void inicializa_fila(Fila* fila){
 }
 
 void enfila(Fila* fila, int valor){
-  TipoNo *novo = (TipoNo *)malloc(sizeof(TipoNo));
+  NoFila *novo = (NoFila *)malloc(sizeof(NoFila));
   novo->dado = valor;
   if (fila->tamanho){
     fila->final->prox = novo;
@@ -22,7 +21,7 @@ void enfila(Fila* fila, int valor){
 
 void desenfila(Fila *fila){
   if (fila->tamanho){
-    TipoNo* aux = fila->inicio;
+    NoFila* aux = fila->inicio;
     if (fila->tamanho == 1)
     {
       fila->final = NULL;

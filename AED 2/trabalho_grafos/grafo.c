@@ -1,29 +1,32 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "grafo.h"
-#include "fila.h"
 
 void inicializa_grafo_matriz(Grafo* grafo, int numVertices){
-  grafo->dadosVertices = (DadoVertice*) malloc(sizeof(DadoVertice) * numVertices);
-  grafo->matrizAdj = (Bool**) malloc(sizeof(Bool*) * numVertices);
+  grafo->matrizAdj = (bool**) malloc(sizeof(bool*) * numVertices);
   for (int i = 0; i < numVertices; i++){
-    grafo->matrizAdj[i] = (Bool*) malloc(sizeof(Bool) * numVertices);
+    grafo->matrizAdj[i] = (bool*) malloc(sizeof(bool) * numVertices);
     for (int j = 0; j < numVertices; j++){
-      grafo->matrizAdj[i][j] = False;
+      grafo->matrizAdj[i][j] = false;
     }
-    DadoVertice dado;
-    dado.cor = Branco;
-    dado.distancia = -1;
-    dado.predecessor = -1;
-    grafo->dadosVertices[i] = dado;
   }
   grafo->numVertices = numVertices;
   grafo->numArestas = 0;
 }
 
+void inicializa_cores(Cor* cores, int tamanho){
+  for (int i = 0; i < tamanho; i++){
+    cores[i] = Branco;
+  }
+}
+
+void inicializa_caminhos(Lista* caminhos, int tamanho){
+  for (int i = 0; i < tamanho; i++){
+    inicializa_lista(&caminhos[i]);
+  }
+}
+
 void adiciona_aresta_grafo(Grafo* grafo, int origem, int destino){
-  grafo->matrizAdj[origem][destino] = True;
-  grafo->matrizAdj[destino][origem] = True;
+  grafo->matrizAdj[origem][destino] = true;
+  grafo->matrizAdj[destino][origem] = true;
   grafo->numArestas++;
 }
 
@@ -59,39 +62,44 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
   while (arestas > 0){
     origem = rand() % numVertices;
     destino = rand() % numVertices;
-    if (origem != destino && grafo->matrizAdj[origem][destino] == False){
+    if (origem != destino && grafo->matrizAdj[origem][destino] == false){
       adiciona_aresta_grafo(grafo, origem, destino);
-      printf("Vértices %d e %d conectados.\n", origem, destino);
+      printf("Vertices %d e %d conectados.\n", origem, destino);
       arestas--;
     }
   }
 }
 
 void bfs(Grafo* grafo, int inicial){
+  Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+  inicializa_cores(cores, grafo->numVertices);
+  Lista* caminhos = malloc(sizeof(Lista) * grafo->numVertices);
+  inicializa_caminhos(caminhos, grafo->numVertices);
+  int* distancias = malloc(sizeof(int) * grafo->numVertices);
 
-  grafo->dadosVertices[inicial].cor = Cinza;
-  grafo->dadosVertices[inicial].distancia = 0;
-  grafo->dadosVertices[inicial].predecessor = -1;
+  cores[inicial] = Cinza;
+  distancias[inicial] = 0;
+  insere_final(&caminhos[inicial], inicial);
 
-  Fila fila;
-  inicializa_fila(&fila);
+  Lista fila;
+  inicializa_lista(&fila);
   enfila(&fila, inicial);
 
-  while (fila.inicio){
-    int atual = fila.inicio->dado;
+  while (fila.prim){
+    int atual = fila.prim->dado;
     for (int j = 0; j < grafo->numVertices; j++){
 
-      if (grafo->matrizAdj[atual][j] == True &&
-         grafo->dadosVertices[j].cor == Branco){
+      if (grafo->matrizAdj[atual][j] == true &&
+        cores[j] == Branco){
 
-        grafo->dadosVertices[j].cor = Cinza;
-        grafo->dadosVertices[j].distancia = grafo->dadosVertices[atual].distancia + 1;
-        grafo->dadosVertices[j].predecessor = atual;
+        cores[j] = Cinza;
+        distancias[j] = distancias[atual] + 1;
+        insere_final(&caminhos[j], atual);
         enfila(&fila, j);
       }
     }
     desenfila(&fila);
-    grafo->dadosVertices[atual].cor = Preto;
+    cores[atual] = Preto;
   }
 }
 
@@ -102,24 +110,24 @@ void mostra_grafo_matriz(Grafo grafo){
     }
     printf("\n");
   }
-  printf("Número de arestas: %d\n\n", grafo.numArestas);
+  printf("Numero de arestas: %d\n\n", grafo.numArestas);
 }
 
-void mostra_vertices(Grafo grafo){
+void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices){
   char* cores[3] = {"branco", "cinza", "preto"};
-  int maior = grafo.dadosVertices[0].distancia;
+  int maior = dadosVertices[0].distancia;
   for (int i = 0; i < grafo.numVertices; i++){
-    DadoVertice dado = grafo.dadosVertices[i];
-    printf("--- Vértice: %d ---\n", i);
+    DadoVertice dado = dadosVertices[i];
+    printf("--- Vertice: %d ---\n", i);
     printf("Cor: %s\n", cores[dado.cor]);
-    printf("Distância: %d\n", dado.distancia);
+    printf("Distancia: %d\n", dado.distancia);
     printf("Predecessor: %d\n", dado.predecessor);
     printf("\n");
     if (dado.distancia > maior){
       maior = dado.distancia;
     }
   }
-  printf("Maior distância: %d\n", maior);
+  printf("Maior distancia: %d\n", maior);
   printf("\n");
 }
 
@@ -128,9 +136,7 @@ void libera_grafo(Grafo* grafo){
     free(grafo->matrizAdj[i]);
   }
   free(grafo->matrizAdj);
-  free(grafo->dadosVertices);
 
-  grafo->dadosVertices = NULL;
   grafo->matrizAdj = NULL;
   grafo->numArestas = 0;
   grafo->numVertices = 0;

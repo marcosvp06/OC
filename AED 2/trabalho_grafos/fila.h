@@ -1,14 +1,16 @@
 #ifndef FILA_H_INCLUDED
 #define FILA_H_INCLUDED
 
-typedef struct TipoNo{
+#include <stdlib.h>
+
+typedef struct NoFila{
   int dado;
-  struct TipoNo* prox;
-} TipoNo;
+  struct NoFila* prox;
+} NoFila;
 
 typedef struct Fila{
-  TipoNo* inicio;
-  TipoNo* final;
+  NoFila* inicio;
+  NoFila* final;
   int tamanho;
 } Fila;
 

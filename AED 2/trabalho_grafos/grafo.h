@@ -1,9 +1,10 @@
 #ifndef GRAfO_H_INCLUDED
 #define GRAfO_H_INCLUDED
 
-typedef int Bool;
-#define True 1
-#define False 0
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include "lista.h"
 
 typedef int Cor;
 #define Branco 0
@@ -17,8 +18,7 @@ typedef struct DadoVertice{
 } DadoVertice;
 
 typedef struct Grafo{
-  Bool** matrizAdj;
-  DadoVertice* dadosVertices;
+  bool** matrizAdj;
   int numVertices;
   int numArestas;
 } Grafo;
@@ -33,7 +33,7 @@ void bfs(Grafo* grafo, int inicial);
 
 void mostra_grafo_matriz(Grafo grafo);
 
-void mostra_vertices(Grafo grafo);
+void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices);
 
 void libera_grafo(Grafo* grafo);
 
