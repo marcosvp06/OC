@@ -26,23 +26,23 @@ class PseudoInstruction:
 
 # Tabela (Dicionário) com todas as instruções, seus opcodes e suas configuracoes de uso de registradores (RA, RB) e segundo byte
 instructions = {
-    "ADD":   Instruction(0x80, True, True, False),
-    "SHR":   Instruction(0x90, True, True, False),
-    "SHL":   Instruction(0xA0, True, True, False),
-    "NOT":   Instruction(0xB0, True, True, False),
-    "AND":   Instruction(0xC0, True, True, False),
-    "OR" :   Instruction(0xD0, True, True, False),
-    "XOR":   Instruction(0xE0, True, True, False),
-    "CMP":   Instruction(0xF0, True, True, False),
-    "LD":    Instruction(0x00, True, True, False),
-    "ST":    Instruction(0x10, True, True, False),
-    "DATA":  Instruction(0x20, False, True, True),
-    "JMPR":  Instruction(0x30, False, True, False),
-    "JMP":   Instruction(0x40, False, False, True),
-    "JCAEZ": Instruction(0x50, False, False, True),
-    "CLF":   Instruction(0x60, False, False, False),
-    "IN":    Instruction(0x70, False, True, False),
-    "OUT":   Instruction(0x78, False, True, False)
+    "ADD":   Instruction(0x8000, True, True, False),
+    "SHR":   Instruction(0x9000, True, True, False),
+    "SHL":   Instruction(0xA000, True, True, False),
+    "NOT":   Instruction(0xB000, True, True, False),
+    "AND":   Instruction(0xC000, True, True, False),
+    "OR" :   Instruction(0xD000, True, True, False),
+    "XOR":   Instruction(0xE000, True, True, False),
+    "CMP":   Instruction(0xF000, True, True, False),
+    "LD":    Instruction(0x0000, True, True, False),
+    "ST":    Instruction(0x1000, True, True, False),
+    "DATA":  Instruction(0x2000, False, True, True),
+    "JMPR":  Instruction(0x3000, False, True, False),
+    "JMP":   Instruction(0x4000, False, False, True),
+    "JCAEZ": Instruction(0x5000, False, False, True),
+    "CLF":   Instruction(0x6000, False, False, False),
+    "IN":    Instruction(0x7000, False, True, False),
+    "OUT":   Instruction(0x7008, False, True, False)
 }
 
 # Tabela (Dicionário) com todas as pseudo-instruções e seus opcodes
@@ -165,7 +165,7 @@ def assemble(input_lines, labels, fout, original_line_numbers):
 
             # Monta primeiro byte: opcode + 4*RA + RB
             result += instr.opcode + 4 * ra + rb
-            hex_result = f"{result:02X}"  # Converte para hexa com dois dígitos
+            hex_result = f"{result:04X}"  # Converte para hexa com dois dígitos
 
             # Se a instrução precisa de segundo byte (ex: endereço ou imediato)
             if instr.has_2bytes:
@@ -177,18 +177,18 @@ def assemble(input_lines, labels, fout, original_line_numbers):
                 # Converte string para inteiro, considerando se é hexa, binário ou decimal
                 if addr_str.startswith(("0X", "0B")):
                     addr = int(addr_str, 0)
-                    if not 0 <= addr <= 255:
-                        raise ValueError("Valor fora do intervalo [0, 255]")
+                    if not 0 <= addr <= 65535:
+                        raise ValueError("Valor fora do intervalo [0, 65535]")
                 else:
                     addr = int(addr_str)
-                    if instr_name == "DATA" and not -128 <= addr <= 127:
-                        raise ValueError("Valor fora do intervalo [-128, 127]")
-                    if instr_name != "DATA" and not 0 <= addr <= 255:
-                        raise ValueError("Valor fora do intervalo [0, 255]")
+                    if instr_name == "DATA" and not -32768 <= addr <= 32767:
+                        raise ValueError("Valor fora do intervalo [-32768, 32767]")
+                    if instr_name != "DATA" and not 0 <= addr <= 65535:
+                        raise ValueError("Valor fora do intervalo [0, 65535]")
 
                 # Calcula complemento de 2 para representar valores negativos ou positivos corretamente
-                addr_byte = (addr + 256) % 256
-                hex_addr = "\n" + f"{addr_byte:02X}"  # Segundo byte
+                addr_byte = (addr + 65536) % 65536
+                hex_addr = "\n" + f"{addr_byte:04X}"  # Segundo byte
 
             # Escreve no arquivo de saída o byte da instrução (+ segundo byte se existir)
             fout.write(hex_result + hex_addr + "\n")
