@@ -25,6 +25,26 @@ void insere_final(Lista* lista, int valor){
     lista->tamanho++;
 }
 
+void remove_final(Lista* lista){
+    if (lista->tamanho == 0) return;
+
+    if (lista->tamanho == 1){
+        free(lista->prim);
+        lista->prim = NULL;
+        lista->ult = NULL;
+    }
+    else{
+        NoLista* atual = lista->prim;
+        while (atual->prox != lista->ult){
+            atual = atual->prox;
+        }
+        free(lista->ult);
+        atual->prox = NULL;
+        lista->ult = atual;
+    }
+    lista->tamanho--;
+}
+
 void enfila(Lista* lista, int valor){
   NoLista *novo = cria_no(valor);
   if (lista->tamanho){
@@ -57,6 +77,7 @@ void empilha(Lista* lista, int valor){
     }
     novo->prox = lista->prim;
     lista->prim = novo;
+    lista->tamanho++;
 }
 
 void desempilha(Lista* lista){

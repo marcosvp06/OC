@@ -33,9 +33,10 @@ void adiciona_aresta_grafo(Grafo* grafo, int origem, int destino){
 void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
   int numVertices = grafo->numVertices;
   int arestas = (int) (grau_conexidade * numVertices * (numVertices - 1)) / 2;
-  printf("Arestas esperadas: %d\n", arestas);
 
-  if (arestas < numVertices - 1) return;
+  if (arestas < numVertices - 1){
+    printf("Impossivel gerar um grafo conexo, faltam arestas.\n");
+  }
 
   int *vertices = (int *)malloc(sizeof(int) * numVertices);
 
@@ -51,12 +52,11 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
     vertices[j] = temp;
   }
 
-  for (int i = 0; i < numVertices - 1; i++){
-    adiciona_aresta_grafo(grafo, vertices[i], vertices[i + 1]);
+  for (int i = 1; i < numVertices; i++){
+    int k = rand()%i;
+    adiciona_aresta_grafo(grafo, vertices[i], vertices[k]);
     arestas--;
   }
-  printf("Arestas depois de tornar conexo: %d\n", grafo->numArestas);
-  printf("Arestas esperadas restantes: %d\n", arestas);
 
   int origem, destino;
   while (arestas > 0){
@@ -64,74 +64,286 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
     destino = rand() % numVertices;
     if (origem != destino && grafo->matrizAdj[origem][destino] == false){
       adiciona_aresta_grafo(grafo, origem, destino);
-      printf("Vertices %d e %d conectados.\n", origem, destino);
       arestas--;
     }
   }
 }
 
-void bfs(Grafo* grafo, int inicial){
-  Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
-  inicializa_cores(cores, grafo->numVertices);
-  Lista* caminhos = malloc(sizeof(Lista) * grafo->numVertices);
-  inicializa_caminhos(caminhos, grafo->numVertices);
-  int* distancias = malloc(sizeof(int) * grafo->numVertices);
+void gera_arvore_aleatoria(Grafo* grafo) {
+    int numVertices = grafo->numVertices;
 
-  cores[inicial] = Cinza;
-  distancias[inicial] = 0;
-  insere_final(&caminhos[inicial], inicial);
+    int* vertices = (int *)malloc(sizeof(int) * numVertices);
 
-  Lista fila;
-  inicializa_lista(&fila);
-  enfila(&fila, inicial);
-
-  while (fila.prim){
-    int atual = fila.prim->dado;
-    for (int j = 0; j < grafo->numVertices; j++){
-
-      if (grafo->matrizAdj[atual][j] == true &&
-        cores[j] == Branco){
-
-        cores[j] = Cinza;
-        distancias[j] = distancias[atual] + 1;
-        insere_final(&caminhos[j], atual);
-        enfila(&fila, j);
-      }
+    for (int i = 0; i < numVertices; i++) {
+        vertices[i] = i;
     }
-    desenfila(&fila);
+
+    for (int i = numVertices - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = vertices[i];
+        vertices[i] = vertices[j];
+        vertices[j] = temp;
+    }
+
+    for (int i = 1; i < numVertices; i++) {
+        int k = rand() % i;
+        adiciona_aresta_grafo(grafo, vertices[i], vertices[k]);
+    }
+
+    free(vertices);
+}
+
+ArvoreBFS bfs(Grafo* grafo, int inicial){
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    int* distancias = malloc(sizeof(int) * grafo->numVertices);
+    for(int i = 0; i < grafo->numVertices; i++)
+        distancias[i] = -1;
+
+    ArvoreBFS arvore;
+    arvore.niveis = malloc(sizeof(Lista) * grafo->numVertices);
+    arvore.max_nivel = 0;
+
+    for(int i = 0; i < grafo->numVertices; i++)
+        inicializa_lista(&arvore.niveis[i]);
+
+    cores[inicial] = Cinza;
+    distancias[inicial] = 0;
+    insere_final(&arvore.niveis[0], inicial);
+
+    Lista fila;
+    inicializa_lista(&fila);
+    enfila(&fila, inicial);
+
+    while(fila.prim){
+        int atual = fila.prim->dado;
+
+        for(int j = 0; j < grafo->numVertices; j++){
+            if(grafo->matrizAdj[atual][j] && cores[j] == Branco){
+                cores[j] = Cinza;
+                distancias[j] = distancias[atual] + 1;
+
+                // inserir no nível correspondente
+                insere_final(&arvore.niveis[ distancias[j] ], j);
+
+                // atualizar max_nivel
+                if(distancias[j] > arvore.max_nivel)
+                    arvore.max_nivel = distancias[j];
+
+                enfila(&fila, j);
+            }
+        }
+
+        desenfila(&fila);
+        cores[atual] = Preto;
+    }
+
+    free(cores);
+    free(distancias);
+    libera_lista(&fila);
+
+    return arvore;
+}
+
+void mostra_arvore_bfs(ArvoreBFS arvore){
+  printf("Arvore resultante da BFS:\n");
+    for(int nivel = 0; nivel <= arvore.max_nivel; nivel++){
+        printf("Nivel %d: ", nivel);
+        NoLista* no = arvore.niveis[nivel].prim;
+        while(no){
+            printf("%d ", no->dado);
+            no = no->prox;
+        }
+        printf("\n");
+    }
+  printf("\n");
+}
+
+void libera_arvore_bfs(ArvoreBFS* arvore, int numVertices){
+    for(int i = 0; i < numVertices; i++){
+        libera_lista(&arvore->niveis[i]);
+    }
+    free(arvore->niveis);
+    arvore->niveis = NULL;
+    arvore->max_nivel = 0;
+}
+
+Lista dfs_iterativa(Grafo* grafo, int inicial){
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    Lista sequencia; // vai guardar a ordem dos vértices visitados
+    inicializa_lista(&sequencia);
+
+    Lista pilha;
+    inicializa_lista(&pilha);
+    empilha(&pilha, inicial);
+
+    while(pilha.prim){
+        int atual = pilha.prim->dado;
+        desempilha(&pilha);
+
+        if(cores[atual] == Branco){
+            cores[atual] = Preto; // marca como visitado (já que não vai voltar nele)
+            insere_final(&sequencia, atual);
+
+            // empilhar os vizinhos (em ordem decrescente para visitar em ordem crescente)
+            for(int j = grafo->numVertices - 1; j >= 0; j--){
+                if(grafo->matrizAdj[atual][j] && cores[j] == Branco){
+                    empilha(&pilha, j);
+                }
+            }
+        }
+    }
+
+    free(cores);
+    libera_lista(&pilha);
+
+    return sequencia;
+}
+
+Lista dfs(Grafo* grafo, int inicial) {
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    Lista sequencia;
+    inicializa_lista(&sequencia);
+
+    dfs_visita(grafo, inicial, cores, &sequencia);
+
+    free(cores);
+    return sequencia;
+}
+
+void dfs_visita(Grafo* grafo, int atual, Cor* cores, Lista* sequencia) {
     cores[atual] = Preto;
-  }
+    insere_final(sequencia, atual);
+
+    for (int j = 0; j < grafo->numVertices; j++) {
+        if (grafo->matrizAdj[atual][j] && cores[j] == Branco) {
+            dfs_visita(grafo, j, cores, sequencia);
+        }
+    }
+}
+
+void mostra_sequencia_dfs(Lista sequencia){
+    printf("Sequencia de vertices visitados na DFS:\n");
+    NoLista* no = sequencia.prim;
+    while(no){
+        printf("%d ", no->dado);
+        no = no->prox;
+    }
+    printf("\n\n");
+}
+
+void mostra_todos_caminhos(Grafo* grafo, int inicial){
+    printf("Todos os caminhos possiveis a partir do vertice %d:\n", inicial);
+    bool* visitado = malloc(sizeof(bool) * grafo->numVertices);
+    for(int i = 0; i < grafo->numVertices; i++)
+        visitado[i] = false;
+
+    Lista caminho;
+    inicializa_lista(&caminho);
+
+    visitado[inicial] = true;
+    insere_final(&caminho, inicial);
+
+    busca_caminhos(grafo, &caminho, visitado);
+
+    libera_lista(&caminho);
+    free(visitado);
+    printf("\n");
+}
+
+void busca_caminhos(Grafo* grafo, Lista* caminho, bool* visitado){
+    // Se o caminho já tem todos os vértices, mostramos
+    if(caminho->tamanho == grafo->numVertices){
+        NoLista* no = caminho->prim;
+        while(no){
+            printf("%d ", no->dado);
+            no = no->prox;
+        }
+        printf("\n");
+        return;
+    }
+
+    // Último vértice no caminho
+    int ultimo = caminho->ult->dado;
+
+    for(int j = 0; j < grafo->numVertices; j++){
+        if(grafo->matrizAdj[ultimo][j] && !visitado[j]){
+            visitado[j] = true;
+            insere_final(caminho, j);
+
+            busca_caminhos(grafo, caminho, visitado);
+
+            // backtrack
+            visitado[j] = false;
+            // remover último elemento
+            remove_final(caminho);
+        }
+    }
+}
+
+bool possui_ciclo(Grafo* grafo, int inicial){
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    Lista pilha;
+    inicializa_lista(&pilha);
+
+    // Empilha o vértice inicial, pai = -1
+    empilha(&pilha, inicial);
+    Lista pais; // lista paralela para guardar os pais
+    inicializa_lista(&pais);
+    empilha(&pais, -1);
+
+    while(pilha.prim){
+        int atual = pilha.prim->dado;
+        desempilha(&pilha);
+
+        int pai = pais.prim->dado;
+        desempilha(&pais);
+
+        if(cores[atual] == Branco){
+            cores[atual] = Cinza;
+
+            // percorrer vizinhos
+            for(int j = grafo->numVertices - 1; j >= 0; j--){
+                if(grafo->matrizAdj[atual][j]){
+                    if(cores[j] == Branco){
+                        empilha(&pilha, j);
+                        empilha(&pais, atual);
+                    }
+                    else if(j != pai){
+                        // achamos um vizinho já visitado que não é o pai
+                        free(cores);
+                        libera_lista(&pilha);
+                        libera_lista(&pais);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    free(cores);
+    libera_lista(&pilha);
+    libera_lista(&pais);
+    return false;
 }
 
 void mostra_grafo_matriz(Grafo grafo){
+  printf("Matriz de adjacencia com %d vertices:\n", grafo.numVertices);
   for (int i = 0; i < grafo.numVertices; i++){
     for (int j = 0; j < grafo.numVertices; j++){
       printf("%d ", grafo.matrizAdj[i][j]);
     }
     printf("\n");
   }
-  printf("Numero de arestas: %d\n\n", grafo.numArestas);
+  printf("Numero de arestas do grafo: %d\n\n", grafo.numArestas);
 }
-
-/*
-void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices){
-  char* cores[3] = {"branco", "cinza", "preto"};
-  int maior = dadosVertices[0].distancia;
-  for (int i = 0; i < grafo.numVertices; i++){
-    DadoVertice dado = dadosVertices[i];
-    printf("--- Vertice: %d ---\n", i);
-    printf("Cor: %s\n", cores[dado.cor]);
-    printf("Distancia: %d\n", dado.distancia);
-    printf("Predecessor: %d\n", dado.predecessor);
-    printf("\n");
-    if (dado.distancia > maior){
-      maior = dado.distancia;
-    }
-  }
-  printf("Maior distancia: %d\n", maior);
-  printf("\n");
-}
-*/
 
 void libera_grafo(Grafo* grafo){
   for (int i = 0; i < grafo->numVertices; i++){

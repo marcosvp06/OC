@@ -11,17 +11,21 @@ typedef int Cor;
 #define Cinza 1
 #define Preto 2
 
-typedef struct DadoVertice{
-  Cor cor;
-  int distancia;
-  int predecessor;
-} DadoVertice;
-
 typedef struct Grafo{
   bool** matrizAdj;
   int numVertices;
   int numArestas;
 } Grafo;
+
+typedef struct {
+    Lista* niveis;   // vetor de listas de vértices por nível
+    int max_nivel;   // maior nível alcançado
+} ArvoreBFS;
+
+typedef struct {
+    int vertice;
+    int pai;
+} ItemPilha;
 
 void inicializa_grafo_matriz(Grafo* grafo, int numVertices);
 
@@ -29,11 +33,29 @@ void adiciona_aresta_grafo(Grafo* grafo, int origem, int destino);
 
 void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade);
 
-void bfs(Grafo* grafo, int inicial);
+void gera_arvore_aleatoria(Grafo* grafo);
+
+ArvoreBFS bfs(Grafo* grafo, int inicial);
+
+void mostra_arvore_bfs(ArvoreBFS arvore);
+
+void libera_arvore_bfs(ArvoreBFS* arvore, int numVertices);
+
+Lista dfs_iterativa(Grafo* grafo, int inicial);
+
+Lista dfs(Grafo* grafo, int inicial);
+
+void dfs_visita(Grafo* grafo, int atual, Cor* cores, Lista* sequencia);
+
+void mostra_sequencia_dfs(Lista seq);
+
+void mostra_todos_caminhos(Grafo* grafo, int inicial);
+
+void busca_caminhos(Grafo* grafo, Lista* caminho, bool* visitado);
+
+bool possui_ciclo(Grafo* grafo, int inicial);
 
 void mostra_grafo_matriz(Grafo grafo);
-
-void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices);
 
 void libera_grafo(Grafo* grafo);
 

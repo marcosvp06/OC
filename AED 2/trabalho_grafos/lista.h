@@ -21,6 +21,8 @@ NoLista* cria_no(int valor);
 
 void insere_final(Lista* lista, int valor);
 
+void remove_final(Lista* lista);
+
 void enfila(Lista* lista, int valor);
 
 void desenfila(Lista* lista);
