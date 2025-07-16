@@ -4,6 +4,9 @@
 #include "grafo.h"
 #include "lista.h"
 
+/**
+ * @brief Limpa o terminal, considerando o sistema operacional.
+ */
 void limpa_tela() {
     #ifdef _WIN32 // Verifica se o sistema é Windows
         system("cls"); // Comando para Windows
@@ -13,13 +16,16 @@ void limpa_tela() {
 }
 
 int main() {
-    srand(time(NULL));
+    srand(time(NULL)); // Inicializa gerador de números aleatórios
 
-    int tamanhos_vertices[] = {5, 6, 7}; // tamanhos pequenos para evitar explosão
+    // Conjuntos de tamanhos de grafos e graus de conexidade
+    int tamanhos_vertices[] = {5, 6, 7}; // Tamanhos pequenos para evitar explosão de caminhos
     float graus_conexidade[] = {0.4f, 0.6f, 0.8f, 1.0f};
+
     int n_vertices = sizeof(tamanhos_vertices) / sizeof(tamanhos_vertices[0]);
     int n_graus = sizeof(graus_conexidade) / sizeof(graus_conexidade[0]);
 
+    // Laço para testar diferentes combinações
     for (int i = 0; i < n_vertices; i++) {
         int numVertices = tamanhos_vertices[i];
 
@@ -27,13 +33,13 @@ int main() {
             float grau = graus_conexidade[j];
 
             printf("\n===== Testando com %d vertices =====\n", numVertices);
-
             printf("\n-> Criando grafo com %.0f%% de conexidade:\n\n", grau * 100);
 
             Grafo g;
             inicializa_grafo_matriz(&g, numVertices);
             gera_arestas_aleatorias(&g, grau);
-            
+
+            // Escolhe vértice aleatório para começar a busca de caminhos
             int v_aleatorio = rand() % numVertices;
             mostra_todos_caminhos(&g, v_aleatorio);
 

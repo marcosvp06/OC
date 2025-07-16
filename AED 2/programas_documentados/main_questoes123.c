@@ -4,6 +4,9 @@
 #include "grafo.h"
 #include "lista.h"
 
+/**
+ * @brief Limpa o terminal, dependendo do sistema operacional.
+ */
 void limpa_tela() {
     #ifdef _WIN32
         system("cls");
@@ -12,6 +15,12 @@ void limpa_tela() {
     #endif
 }
 
+/**
+ * @brief Calcula a média de um vetor de tempos.
+ * @param tempos Vetor contendo os tempos.
+ * @param tamanho Tamanho do vetor.
+ * @return Média dos tempos.
+ */
 double calcula_media_tempo(double tempos[], int tamanho) {
     if (tamanho == 0) return 0.0;
     double soma = 0.0;
@@ -20,6 +29,12 @@ double calcula_media_tempo(double tempos[], int tamanho) {
     return soma / tamanho;
 }
 
+/**
+ * @brief Calcula o tempo decorrido entre dois instantes.
+ * @param inicio Instante inicial (clock_t).
+ * @param fim Instante final (clock_t).
+ * @return Tempo em segundos (double).
+ */
 double calcula_tempo(clock_t inicio, clock_t fim) {
     return (double)(fim - inicio) / CLOCKS_PER_SEC;
 }
@@ -27,16 +42,16 @@ double calcula_tempo(clock_t inicio, clock_t fim) {
 int main() {
     srand(time(NULL));
 
+    // Conjuntos de teste: tamanhos e graus de conexidade
     int tamanhos_vertices[] = {10, 50, 100, 300, 500, 750, 1000, 1500, 2500};
     float graus_conexidade[] = {0.25f, 0.40f, 0.65f, 0.85f, 1.0f};
-
     int n_vertices = sizeof(tamanhos_vertices) / sizeof(tamanhos_vertices[0]);
     int n_graus = sizeof(graus_conexidade) / sizeof(graus_conexidade[0]);
 
     double medias_bfs[n_vertices];
     double medias_dfs[n_vertices];
 
-    // Abre CSVs separados
+    // Abertura dos arquivos CSV
     FILE *csv_bfs = fopen("tempos_bfs.csv", "w");
     FILE *csv_dfs = fopen("tempos_dfs.csv", "w");
     if (!csv_bfs || !csv_dfs) {
@@ -44,11 +59,10 @@ int main() {
         return 1;
     }
 
-    // Cabeçalhos
+    // Cabeçalhos dos arquivos CSV
     fprintf(csv_bfs, "Vertices");
     fprintf(csv_dfs, "Vertices");
-    for (int j = 0; j < n_graus; j++)
-    {
+    for (int j = 0; j < n_graus; j++) {
         fprintf(csv_bfs, ",%.0f%%", graus_conexidade[j]*100);
         fprintf(csv_dfs, ",%.0f%%", graus_conexidade[j]*100);
     }
@@ -57,6 +71,7 @@ int main() {
 
     printf("==== INICIO DAS MEDICOES ====\n");
 
+    // Loop principal de teste
     for (int i = 0; i < n_vertices; i++) {
         int numVertices = tamanhos_vertices[i];
         double tempos_bfs[n_graus];
@@ -72,7 +87,7 @@ int main() {
             inicializa_grafo_matriz(&g, numVertices);
             gera_arestas_aleatorias(&g, grau);
 
-            // --- BFS ---
+            // --- Execução e medição de tempo da BFS ---
             clock_t inicio_bfs = clock();
             ArvoreBFS arvore = bfs(&g, 0);
             clock_t fim_bfs = clock();
@@ -84,7 +99,7 @@ int main() {
             }
             libera_arvore_bfs(&arvore, g.numVertices);
 
-            // --- DFS ---
+            // --- Execução e medição de tempo da DFS ---
             clock_t inicio_dfs = clock();
             Lista seq = dfs(&g, 0);
             clock_t fim_dfs = clock();
@@ -101,7 +116,7 @@ int main() {
             printf("-----------------------------------------------------\n");
         }
 
-        // Médias
+        // Cálculo das médias para cada tamanho de grafo
         double media_bfs = calcula_media_tempo(tempos_bfs, n_graus);
         double media_dfs = calcula_media_tempo(tempos_dfs, n_graus);
         medias_bfs[i] = media_bfs;
@@ -110,13 +125,12 @@ int main() {
         printf("\n>> Medias para %d vertices:\n", numVertices);
         printf("BFS: %.9f s | DFS: %.9f s\n", media_bfs, media_dfs);
 
-        // Grava linhas no CSV de BFS
+        // Escrita dos resultados no CSV
         fprintf(csv_bfs, "%d", numVertices);
         for (int j = 0; j < n_graus; j++)
             fprintf(csv_bfs, ",%.9f", tempos_bfs[j]);
         fprintf(csv_bfs, ",%.9f\n", media_bfs);
 
-        // Grava linhas no CSV de DFS
         fprintf(csv_dfs, "%d", numVertices);
         for (int j = 0; j < n_graus; j++)
             fprintf(csv_dfs, ",%.9f", tempos_dfs[j]);
@@ -130,7 +144,7 @@ int main() {
     fclose(csv_bfs);
     fclose(csv_dfs);
 
-    // Resumo final na tela
+    // Exibe resumo final das médias
     printf("\n         ====== RESUMO FINAL DAS MEDIAS ======\n\n");
     printf("%-15s %-20s %-20s\n", "Vertices", "Media BFS (s)", "Media DFS (s)");
     printf("--------------------------------------------------------------\n");
