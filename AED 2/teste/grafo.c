@@ -33,7 +33,6 @@ void adiciona_aresta_grafo(Grafo* grafo, int origem, int destino){
 void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
   int numVertices = grafo->numVertices;
   int arestas = (int) (grau_conexidade * numVertices * (numVertices - 1)) / 2;
-  printf("Arestas esperadas: %d\n", arestas);
 
   if (arestas < numVertices - 1){
     printf("Impossivel gerar um grafo conexo, faltam arestas.\n");
@@ -51,7 +50,7 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
     temp = vertices[i];
     vertices[i] = vertices[j];
     vertices[j] = temp;
-  } 
+  }
 
   for (int i = 1; i < numVertices; i++){
     int k = rand()%i;
@@ -70,13 +69,37 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
   }
 }
 
+void gera_arvore_aleatoria(Grafo* grafo) {
+    int numVertices = grafo->numVertices;
+
+    int* vertices = (int *)malloc(sizeof(int) * numVertices);
+
+    for (int i = 0; i < numVertices; i++) {
+        vertices[i] = i;
+    }
+
+    for (int i = numVertices - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = vertices[i];
+        vertices[i] = vertices[j];
+        vertices[j] = temp;
+    }
+
+    for (int i = 1; i < numVertices; i++) {
+        int k = rand() % i;
+        adiciona_aresta_grafo(grafo, vertices[i], vertices[k]);
+    }
+
+    free(vertices);
+}
+
 ArvoreBFS bfs(Grafo* grafo, int inicial){
     Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
     inicializa_cores(cores, grafo->numVertices);
 
     int* distancias = malloc(sizeof(int) * grafo->numVertices);
     for(int i = 0; i < grafo->numVertices; i++)
-        distancias[i] = -1; // -1 indica que não foi visitado
+        distancias[i] = -1;
 
     ArvoreBFS arvore;
     arvore.niveis = malloc(sizeof(Lista) * grafo->numVertices);
@@ -146,7 +169,7 @@ void libera_arvore_bfs(ArvoreBFS* arvore, int numVertices){
     arvore->max_nivel = 0;
 }
 
-Lista dfs(Grafo* grafo, int inicial){
+Lista dfs_iterativa(Grafo* grafo, int inicial){
     Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
     inicializa_cores(cores, grafo->numVertices);
 
@@ -180,6 +203,30 @@ Lista dfs(Grafo* grafo, int inicial){
     return sequencia;
 }
 
+Lista dfs(Grafo* grafo, int inicial) {
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    Lista sequencia;
+    inicializa_lista(&sequencia);
+
+    dfs_visita(grafo, inicial, cores, &sequencia);
+
+    free(cores);
+    return sequencia;
+}
+
+void dfs_visita(Grafo* grafo, int atual, Cor* cores, Lista* sequencia) {
+    cores[atual] = Preto;
+    insere_final(sequencia, atual);
+
+    for (int j = 0; j < grafo->numVertices; j++) {
+        if (grafo->matrizAdj[atual][j] && cores[j] == Branco) {
+            dfs_visita(grafo, j, cores, sequencia);
+        }
+    }
+}
+
 void mostra_sequencia_dfs(Lista sequencia){
     printf("Sequencia de vertices visitados na DFS:\n");
     NoLista* no = sequencia.prim;
@@ -191,6 +238,7 @@ void mostra_sequencia_dfs(Lista sequencia){
 }
 
 void mostra_todos_caminhos(Grafo* grafo, int inicial){
+    printf("Todos os caminhos possiveis a partir do vertice %d:\n", inicial);
     bool* visitado = malloc(sizeof(bool) * grafo->numVertices);
     for(int i = 0; i < grafo->numVertices; i++)
         visitado[i] = false;
@@ -287,13 +335,14 @@ bool possui_ciclo(Grafo* grafo, int inicial){
 }
 
 void mostra_grafo_matriz(Grafo grafo){
+  printf("Matriz de adjacencia com %d vertices:\n", grafo.numVertices);
   for (int i = 0; i < grafo.numVertices; i++){
     for (int j = 0; j < grafo.numVertices; j++){
       printf("%d ", grafo.matrizAdj[i][j]);
     }
     printf("\n");
   }
-  printf("Numero de arestas: %d\n\n", grafo.numArestas);
+  printf("Numero de arestas do grafo: %d\n\n", grafo.numArestas);
 }
 
 void libera_grafo(Grafo* grafo){

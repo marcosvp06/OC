@@ -33,16 +33,20 @@ void adiciona_aresta_grafo(Grafo* grafo, int origem, int destino);
 
 void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade);
 
+void gera_arvore_aleatoria(Grafo* grafo);
+
 ArvoreBFS bfs(Grafo* grafo, int inicial);
 
 void mostra_arvore_bfs(ArvoreBFS arvore);
 
 void libera_arvore_bfs(ArvoreBFS* arvore, int numVertices);
 
-// DFS: retorna uma lista com a sequência de vértices visitados
+Lista dfs_iterativa(Grafo* grafo, int inicial);
+
 Lista dfs(Grafo* grafo, int inicial);
 
-// Mostra a sequência de vértices visitados
+void dfs_visita(Grafo* grafo, int atual, Cor* cores, Lista* sequencia);
+
 void mostra_sequencia_dfs(Lista seq);
 
 void mostra_todos_caminhos(Grafo* grafo, int inicial);
