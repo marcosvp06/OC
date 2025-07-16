@@ -1,5 +1,5 @@
-#ifndef GRAfO_H_INCLUDED
-#define GRAfO_H_INCLUDED
+#ifndef GRAFO_H_INCLUDED
+#define GRAFO_H_INCLUDED
 
 #include <stdio.h>
 #include <stdlib.h>

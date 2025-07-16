@@ -113,6 +113,7 @@ void mostra_grafo_matriz(Grafo grafo){
   printf("Numero de arestas: %d\n\n", grafo.numArestas);
 }
 
+/*
 void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices){
   char* cores[3] = {"branco", "cinza", "preto"};
   int maior = dadosVertices[0].distancia;
@@ -130,6 +131,7 @@ void mostra_vertices(Grafo grafo, DadoVertice* dadosVertices){
   printf("Maior distancia: %d\n", maior);
   printf("\n");
 }
+*/
 
 void libera_grafo(Grafo* grafo){
   for (int i = 0; i < grafo->numVertices; i++){
