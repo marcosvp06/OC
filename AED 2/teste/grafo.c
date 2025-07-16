@@ -51,10 +51,11 @@ void gera_arestas_aleatorias(Grafo* grafo, float grau_conexidade){
     temp = vertices[i];
     vertices[i] = vertices[j];
     vertices[j] = temp;
-  }
+  } 
 
-  for (int i = 0; i < numVertices - 1; i++){
-    adiciona_aresta_grafo(grafo, vertices[i], vertices[i + 1]);
+  for (int i = 1; i < numVertices; i++){
+    int k = rand()%i;
+    adiciona_aresta_grafo(grafo, vertices[i], vertices[k]);
     arestas--;
   }
 
