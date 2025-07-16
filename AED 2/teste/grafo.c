@@ -237,6 +237,54 @@ void busca_caminhos(Grafo* grafo, Lista* caminho, bool* visitado){
     }
 }
 
+bool possui_ciclo(Grafo* grafo, int inicial){
+    Cor* cores = malloc(sizeof(Cor) * grafo->numVertices);
+    inicializa_cores(cores, grafo->numVertices);
+
+    Lista pilha;
+    inicializa_lista(&pilha);
+
+    // Empilha o vértice inicial, pai = -1
+    empilha(&pilha, inicial);
+    Lista pais; // lista paralela para guardar os pais
+    inicializa_lista(&pais);
+    empilha(&pais, -1);
+
+    while(pilha.prim){
+        int atual = pilha.prim->dado;
+        desempilha(&pilha);
+
+        int pai = pais.prim->dado;
+        desempilha(&pais);
+
+        if(cores[atual] == Branco){
+            cores[atual] = Cinza;
+
+            // percorrer vizinhos
+            for(int j = grafo->numVertices - 1; j >= 0; j--){
+                if(grafo->matrizAdj[atual][j]){
+                    if(cores[j] == Branco){
+                        empilha(&pilha, j);
+                        empilha(&pais, atual);
+                    }
+                    else if(j != pai){
+                        // achamos um vizinho já visitado que não é o pai
+                        free(cores);
+                        libera_lista(&pilha);
+                        libera_lista(&pais);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    free(cores);
+    libera_lista(&pilha);
+    libera_lista(&pais);
+    return false;
+}
+
 void mostra_grafo_matriz(Grafo grafo){
   for (int i = 0; i < grafo.numVertices; i++){
     for (int j = 0; j < grafo.numVertices; j++){

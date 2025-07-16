@@ -22,6 +22,10 @@ typedef struct {
     int max_nivel;   // maior nível alcançado
 } ArvoreBFS;
 
+typedef struct {
+    int vertice;
+    int pai;
+} ItemPilha;
 
 void inicializa_grafo_matriz(Grafo* grafo, int numVertices);
 
@@ -44,6 +48,8 @@ void mostra_sequencia_dfs(Lista seq);
 void mostra_todos_caminhos(Grafo* grafo, int inicial);
 
 void busca_caminhos(Grafo* grafo, Lista* caminho, bool* visitado);
+
+bool possui_ciclo(Grafo* grafo, int inicial);
 
 void mostra_grafo_matriz(Grafo grafo);
 
