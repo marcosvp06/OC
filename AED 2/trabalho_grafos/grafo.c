@@ -238,7 +238,7 @@ void mostra_sequencia_dfs(Lista sequencia){
 }
 
 void mostra_todos_caminhos(Grafo* grafo, int inicial){
-    printf("Todos os caminhos possiveis a partir do vertice %d:\n", inicial);
+    printf("Todos os caminhos a partir do vertice %d:\n", inicial);
     bool* visitado = malloc(sizeof(bool) * grafo->numVertices);
     for(int i = 0; i < grafo->numVertices; i++)
         visitado[i] = false;
