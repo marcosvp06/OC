@@ -4,6 +4,14 @@
 #include "grafo.h"
 #include "lista.h"
 
+void limpa_tela() {
+    #ifdef _WIN32 // Verifica se o sistema é Windows
+        system("cls"); // Comando para Windows
+    #else // Para Linux, macOS e outros sistemas tipo Unix
+        system("clear"); // Comando para Linux/Unix
+    #endif
+}
+
 double calcula_media_tempo(double tempos[], int tamanho) {
     if (tamanho == 0) return 0.0;
     double soma = 0.0;
@@ -85,11 +93,9 @@ int main() {
         printf("BFS: %.9f s | DFS: %.9f s\n", media_bfs, media_dfs);
 
         // Pausa
-        printf("\nPressione ENTER para continuar...");
+        printf("\nPressione ENTER para continuar...\n\n");
         getchar();
-
-        // Limpa a tela
-        system("cls");
+        limpa_tela();
     }
 
     printf("\n=== RESUMO FINAL DAS MEDIAS ===\n");
